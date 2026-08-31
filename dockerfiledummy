@@ -1,0 +1,30 @@
+FROM python:3.12-slim
+
+# Prevent Python from writing .pyc files and buffer output immediately
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# apt-get install build-essential 
+# -y is to answer linux question "Do you want to continue? [Y/n]" 
+# --no-install-recommends means "Install only the package and its required dependencies, not optional recommended packages."
+# What is build-essential?: This is a Debian package bundle containing tools commonly needed to compile software.
+
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+# --no-cache-dir: Don't save downloaded package files in pip's cache.
+RUN pip install --no-cache-dir --upgarade pip && pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+RUN useradd --create-home appuser && chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 8000
+
+CMD [ "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000" ]

@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test API Gateway
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: api_platform
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready - U postgres -d api_platform"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_NAME: Multi-Tenant API Platform
+      APP_ENV: testing
+      DEBUG: "false"
+
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/api_platform
+      REDIS_URL: redis://localhost:6379/0
+
+      JWT_SECRET_KEY: ci-testing-secret-key-not-for-production
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      REFRESH_TOKEN_EXPIRE_DAYS: "7"
+
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      GITHUB_CLIENT_ID: ""
+      GITHUB_CLIENT_SECRET: ""
+
+      RAZORPAY_KEY_ID: ""
+      RAZORPAY_KEY_SECRET: ""
+      RAZORPAY_WEBHOOK_SECRET: ""
+
+      STRIPE_SECRET_KEY: ""
+      STRIPE_WEBHOOK_SECRET: ""
+      STRIPE_PUBLISHABLE_KEY: ""
+
+      FRONTEND_URL: http://localhost:3000
+      PAYMENT_SUCCESS_URL: http://localhost:3000/payments/success
+      PAYMENT_CANCEL_URL: http://localhost:3000/payments/cancel
+
+    steps:
+      - name: Checkout code
+        uses: actions/Checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run database migration
+        run: alembic upgrade head
+
+      - name: Run tests
+        run: python -m pytest
+
+      - name: Build docker image
+        run: docker build -t api-gateway:${{github.sha}}
