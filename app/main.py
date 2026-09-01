@@ -58,9 +58,10 @@ app.include_router(gateway_routes)
 
 
 @app.get("/")
-async def root() -> dict[str, str]:
+async def root():
     return {
         "message": "Multi-Tenant API Platform",
+        "version": "1.0.0",
         "docs": "/docs",
         "health": "/health",
     }
