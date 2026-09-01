@@ -22,6 +22,7 @@ from app.api.routes.upstreams import router as upstreams_routes
 from app.core.config import settings
 from app.core.redis import close_redis
 from app.services.gateway_proxy import close_shared_proxy_client
+from fastapi.middleware.cors import CORSMiddleware
 
 
 @asynccontextmanager
@@ -36,6 +37,16 @@ app = FastAPI(
     description="Production-grade Multi-Tenant API Gateway and Developer Management Platform.",
     version="1.0.0",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        settings.FRONTEND_URL
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET_KEY)
@@ -55,6 +66,8 @@ app.include_router(api_keys_routes)
 app.include_router(api_key_domains_routes)
 app.include_router(analytics_routes)
 app.include_router(gateway_routes)
+
+
 
 
 @app.get("/")
