@@ -88,4 +88,4 @@ jobs:
         run: python -m pytest
 
       - name: Build docker image
-        run: docker build -t api-gateway:${{github.sha}}
+        run: docker build -t api-gateway:${{ github.sha }} .

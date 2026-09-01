@@ -13,12 +13,6 @@ from app.main import app
 from app.models.api_key import APIKey
 from app.models.subscription import Subscription
 
-ROLES = {
-    "admin": "c56a72e1-a824-4355-bf9e-66fee84b9837",
-    "member": "f716d958-89f8-44d8-a07c-233dc4b049e9",
-    "owner": "e353da5a-8202-4ffc-a2e6-ea2359b3d0a1",
-}
-
 
 @pytest_asyncio.fixture
 async def async_client():

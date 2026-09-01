@@ -15,14 +15,8 @@ from app.models.api_key_domain import APIKeyDomain
 from app.models.api_plan import APIPlan
 from app.models.api_route import APIRoute
 
-ROLES = {
-    "admin": "c56a72e1-a824-4355-bf9e-66fee84b9837",
-    "member": "f716d958-89f8-44d8-a07c-233dc4b049e9",
-    "owner": "e353da5a-8202-4ffc-a2e6-ea2359b3d0a1",
-}
-
-
 from app.core.database import AsyncSessionLocal, engine
+from app.repositories.role import RoleRepository
 
 
 @pytest_asyncio.fixture
@@ -38,6 +32,18 @@ async def setup_tenants(async_client):
     ts = int(time.time() * 1000)
     users = {}
     tokens = {}
+
+    # Dynamically fetch role IDs from the current database
+    async with AsyncSessionLocal() as session:
+        role_repo = RoleRepository(session)
+        admin_role = await role_repo.get_by_name("admin")
+        member_role = await role_repo.get_by_name("member")
+        owner_role = await role_repo.get_by_name("owner")
+        roles = {
+            "admin": str(admin_role.id),
+            "member": str(member_role.id),
+            "owner": str(owner_role.id),
+        }
 
     # Register users
     for role_name in ["owner_a", "admin_a", "member_a", "multi", "owner_b", "outsider"]:
@@ -71,24 +77,24 @@ async def setup_tenants(async_client):
     await async_client.post(
         f"/organizations/{org_a}/members",
         headers={"Authorization": f"Bearer {tokens['owner_a']}"},
-        json={"user_id": users["admin_a"], "role_id": ROLES["admin"]},
+        json={"user_id": users["admin_a"], "role_id": roles["admin"]},
     )
     await async_client.post(
         f"/organizations/{org_a}/members",
         headers={"Authorization": f"Bearer {tokens['owner_a']}"},
-        json={"user_id": users["member_a"], "role_id": ROLES["member"]},
+        json={"user_id": users["member_a"], "role_id": roles["member"]},
     )
     await async_client.post(
         f"/organizations/{org_a}/members",
         headers={"Authorization": f"Bearer {tokens['owner_a']}"},
-        json={"user_id": users["multi"], "role_id": ROLES["admin"]},
+        json={"user_id": users["multi"], "role_id": roles["admin"]},
     )
 
     # Assign roles in Org B (multi is only member)
     await async_client.post(
         f"/organizations/{org_b}/members",
         headers={"Authorization": f"Bearer {tokens['owner_b']}"},
-        json={"user_id": users["multi"], "role_id": ROLES["member"]},
+        json={"user_id": users["multi"], "role_id": roles["member"]},
     )
 
     return {

@@ -29,12 +29,6 @@ from app.services.gateway_proxy import GatewayProxyService
 from app.services.quota import QuotaService
 from app.services.rate_limit import RateLimitService
 
-ROLES = {
-    "admin": "c56a72e1-a824-4355-bf9e-66fee84b9837",
-    "member": "f716d958-89f8-44d8-a07c-233dc4b049e9",
-    "owner": "e353da5a-8202-4ffc-a2e6-ea2359b3d0a1",
-}
-
 
 @pytest_asyncio.fixture
 async def async_client():
