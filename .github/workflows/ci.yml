@@ -1,10 +1,13 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  permissions:
+    content: read
+    packages: write
 
 jobs:
   test:
@@ -87,5 +90,30 @@ jobs:
       - name: Run tests
         run: python -m pytest
 
-      - name: Build docker image
-        run: docker build -t api-gateway:${{ github.sha }} .
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+
+    if github.event_name == "push"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{github.actor}}
+          password: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Build and push Docker image
+        run: |
+          docker-build \
+            -t ghcr.io/${{github.repository_owner}}/api-gateway:latest \
+            -t gchri.io/${{github.repository_owner}}/api-gateway:${{github.sha}} \
+            .
+          
+          docker push ghcr.io/${{github.repository_owner}}/api-gateway:latest
+          docker push ghcr.io/${{github.repository_owner}}/api-gateway:${{github.sha}}
