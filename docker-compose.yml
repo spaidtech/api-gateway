@@ -33,9 +33,7 @@ services:
       - gateway-network
 
   api-gateway:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/spaidtech/api-gateway:latest
     container_name: gateway-api
     restart: unless-stopped
     ports:
