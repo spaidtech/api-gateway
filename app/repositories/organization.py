@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.organization import Organization
+from app.models.membership import OrganizationMember
 
 class OrganizationRepository:
     def __init__(self, db: AsyncSession):
@@ -14,6 +15,24 @@ class OrganizationRepository:
         result = await self.db.execute(stmt)
 
         return result.scalar_one_or_none()
+
+    async def get_by_user_id(self, user_id: UUID) -> list[Organization]:
+        stmt = (
+            select(Organization)
+            .join(
+                OrganizationMember,
+                OrganizationMember.organization_id == Organization.id
+            )
+            .where(
+                OrganizationMember.user_id == user_id,
+                Organization.is_active.is_(True)
+            )
+            .order_by(Organization.created_at.desc())
+        )
+
+        result = await self.db.execute(stmt)
+
+        return list(result.scalars().all())
 
     async def get_by_slug(self, slug: str) -> Organization | None:
         stmt = select(Organization).where(Organization.slug == slug)

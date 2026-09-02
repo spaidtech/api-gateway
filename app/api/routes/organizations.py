@@ -46,6 +46,12 @@ async def create_organization(
             detail=str(exc),
         )
 
+@router.get("", response_model=list[OrganizationResponse])
+async def list_organizations(
+    current_user: User=Depends(get_current_user),
+    organization_service: OrganizationService=Depends(get_organization_service)
+):
+    return await organization_service.get_for_user(current_user.id)
 
 @router.get(
     "/{organization_id}",

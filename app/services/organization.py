@@ -28,6 +28,9 @@ class OrganizationService:
     async def get_by_slug(self, slug: str) -> Organization | None:
         return await self.repository.get_by_slug(slug)
 
+    async def get_for_user(self, user_id: UUID) -> list[Organization]:
+        return await self.repository.get_by_user_id(user_id)
+
     async def create(
             self,
             *,
